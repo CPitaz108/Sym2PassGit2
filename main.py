@@ -27,12 +27,21 @@ app.config['MYSQL_CURSORCLASS'] = 'DictCursor'
 mysql = MySQL(app);
 ##Creats a API object called API from the Flash object
 
-@app.route('/')
-def index():
+@app.route('/users')
+def get_users():
     cur = mysql.connection.cursor();
-    cur.execute('''INSERT INTO customers VALUES (10, 20, NULL, NULL, NULL);''')
-    mysql.connection.commit()
-    return "Done!";
+    cur.execute('''SELECT * FROM test;''');
+    rv = cur.fetchall();
+    return str(rv);
+
+@app.route('/users/<id>')
+def add(id):
+    cur = mysql.connection.cursor();
+    cur.execute('''SELECT MAX(idtest) FROM test;''');
+    maxID = cur.fetchone();
+    cur.execute('''INSERT INTO test VALUES (%s, %s)''', (maxID['MAX(idtest)'] + 1, id));
+    mysql.connection.commit();
+    return "Inserted ID " + str(maxID['MAX(idtest)']) + " and string " + str(id);
 
 ##Test class that defines a HelloWorld object. By defining the class HelloWorld, you can give it methods (A get method has already been established that
 # just returns a sample JSON object with a data key, and a value of "Hello World"
