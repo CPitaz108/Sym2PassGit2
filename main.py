@@ -14,6 +14,8 @@
 from flask import Flask;
 from flask_restful import Api, Resource;
 from flask_mysqldb import MySQL;
+import time;
+import math;
 
 ##Create a Flash object called API with the parameter __name__ (Name of the python file)
 app = Flask(__name__);
@@ -30,18 +32,23 @@ mysql = MySQL(app);
 @app.route('/users')
 def get_users():
     cur = mysql.connection.cursor();
-    cur.execute('''SELECT * FROM test;''');
+    cur.execute('''SELECT * FROM customers;''');
     rv = cur.fetchall();
     return str(rv);
 
-@app.route('/users/<id>')
-def add(id):
+@app.route('/user/epc=<epc_id>&d=<device_id>&t_id=<test_id>&s=<test_status>')
+def add(epc_id, device_id, test_id, test_status):
     cur = mysql.connection.cursor();
-    cur.execute('''SELECT MAX(idtest) FROM test;''');
+    cur.execute('''SELECT MAX(id) FROM customers;''');
     maxID = cur.fetchone();
-    cur.execute('''INSERT INTO test VALUES (%s, %s)''', (maxID['MAX(idtest)'] + 1, id));
+    seconds = math.floor(time.time());
+    expire_time = seconds+120;
+    valid_until = seconds+86400;
+    cur.execute('''INSERT INTO customers VALUES (%s, %s, %s, %s, %s, %s, %s, %s)''', (maxID['MAX(id)'] + 1, device_id, valid_until, expire_time, seconds, test_status, test_id, epc_id));
     mysql.connection.commit();
-    return "Inserted ID " + str(maxID['MAX(idtest)']) + " and string " + str(id);
+    status = "Inserted the following row: <br>\nid: " + str(maxID['MAX(id)']) + "<br>\ndevice_id: " + str(device_id) + "<br>\nVerification Endtime: " + str(valid_until) + "<br>\nTime scan is active: " + str(expire_time) + "<br>\nLast Updated: " + str(seconds) + "<br>\nTest Status: " + str(test_status) + "<br>\nTest ID: " + str(test_id) + "<br>\nEPC ID: " + str(epc_id);
+    print(status);
+    return status
 
 ##Test class that defines a HelloWorld object. By defining the class HelloWorld, you can give it methods (A get method has already been established that
 # just returns a sample JSON object with a data key, and a value of "Hello World"
