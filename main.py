@@ -29,10 +29,17 @@ app.config['MYSQL_CURSORCLASS'] = 'DictCursor'
 mysql = MySQL(app);
 ##Creats a API object called API from the Flash object
 
-@app.route('/users')
+@app.route('/users/getall')
 def get_users():
     cur = mysql.connection.cursor();
     cur.execute('''SELECT * FROM customers;''');
+    rv = cur.fetchall();
+    return str(rv);
+
+@app.route('/users/get_user_by_device/<device_id>')
+def get_user_by_device(device_id):
+    cur = mysql.connection.cursor();
+    cur.execute('''SELECT * FROM customers WHERE device_id = ''' + "\'" + str(device_id) + "\'");
     rv = cur.fetchall();
     return str(rv);
 
@@ -46,9 +53,30 @@ def add(epc_id, device_id, test_id, test_status):
     valid_until = seconds+86400;
     cur.execute('''INSERT INTO customers VALUES (%s, %s, %s, %s, %s, %s, %s, %s)''', (maxID['MAX(id)'] + 1, device_id, valid_until, expire_time, seconds, test_status, test_id, epc_id));
     mysql.connection.commit();
-    status = "Inserted the following row: <br>\nid: " + str(maxID['MAX(id)']) + "<br>\ndevice_id: " + str(device_id) + "<br>\nVerification Endtime: " + str(valid_until) + "<br>\nTime scan is active: " + str(expire_time) + "<br>\nLast Updated: " + str(seconds) + "<br>\nTest Status: " + str(test_status) + "<br>\nTest ID: " + str(test_id) + "<br>\nEPC ID: " + str(epc_id);
+    status = "Inserted the following row: <br>\nid: " + str(maxID['MAX(id)'] + 1) + "<br>\ndevice_id: " + str(device_id) + "<br>\nVerification Endtime: " + str(valid_until) + "<br>\nTime scan is active: " + str(expire_time) + "<br>\nLast Updated: " + str(seconds) + "<br>\nTest Status: " + str(test_status) + "<br>\nTest ID: " + str(test_id) + "<br>\nEPC ID: " + str(epc_id);
     print(status);
     return status
+
+##Passes
+@app.route('/passes/get_status/<device_id>')
+def get_status_by_device(device_id):
+    cur = mysql.connection.cursor();
+    seconds = math.floor(time.time());
+    cur.execute('''SELECT * FROM customers WHERE device_id = ''' + "\'" + str(device_id) + "\'" + '''AND valid_until > ''' + str(seconds) + ''' ORDER BY valid_until DESC''');
+    rv = cur.fetchone();
+    if rv == ():
+        return "No Valid Pass!"
+    return "Valid Pass Found: " + str(rv);
+
+@app.route('/passes/get_status_history/<device_id>')
+def get_status_history_by_device(device_id):
+    cur = mysql.connection.cursor();
+    seconds = math.floor(time.time());
+    cur.execute('''SELECT * FROM customers WHERE device_id = ''' + "\'" + str(device_id) + "\' ORDER BY valid_until DESC");
+    rv = cur.fetchall();
+    if rv == ():
+        return "No Passes Found!"
+    return "Passes Found: " + str(rv);
 
 ##Test class that defines a HelloWorld object. By defining the class HelloWorld, you can give it methods (A get method has already been established that
 # just returns a sample JSON object with a data key, and a value of "Hello World"
