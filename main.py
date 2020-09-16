@@ -34,4 +34,4 @@ api.add_resource(HelloWorld, "/helloworld")
 
 ##If the function is the main.py (Which this is)
 if __name__ == "__main__":
-    app.run(debug=True);  asd;
+    app.run(debug=True);
